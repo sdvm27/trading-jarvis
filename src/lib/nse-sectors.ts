@@ -48,3 +48,19 @@ export function periodToYahooRange(period: SectorPeriod): "5d" | "1mo" | "3mo" |
       return "1y";
   }
 }
+
+/** NSE historical index API range (see macroRangeToNseDates). */
+export function periodToNseRange(period: SectorPeriod): string {
+  switch (period) {
+    case "1d":
+    case "1w":
+    case "1m":
+      return "1m";
+    case "3m":
+      return "3m";
+    case "6m":
+      return "6m";
+    case "1y":
+      return "1y";
+  }
+}

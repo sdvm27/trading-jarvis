@@ -119,6 +119,7 @@ export function macroRangeToNseDates(range: string): {
   const to = new Date();
   const days: Record<string, number> = {
     "1m": 31,
+    "3m": 93,
     "6m": 186,
     "1y": 366,
     "5y": 366 * 5,
