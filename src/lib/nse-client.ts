@@ -49,6 +49,56 @@ export async function fetchNseAllIndices(): Promise<NseIndexRow[]> {
   return setCached(cacheKey, rows, 5 * 60 * 1000);
 }
 
+type EquityIndexConstituentRow = {
+  symbol?: string;
+  priority?: number;
+};
+
+/** Live constituents via NSE `equity-stock-indices` (uses indexSymbol, not display name). */
+export async function fetchNseEquityIndexConstituents(
+  indexSymbol: string,
+): Promise<string[]> {
+  const query = indexSymbol.trim().replace(/\s+/g, " ").toUpperCase();
+  const cacheKey = `nse:eq-index-const:${query}`;
+  const cached = getCached<string[]>(cacheKey);
+  if (cached) return cached;
+
+  const cookie = await nseCookie();
+  const url = new URL("https://www.nseindia.com/api/equity-stock-indices");
+  url.searchParams.set("index", query);
+
+  const res = await fetch(url.toString(), {
+    headers: {
+      "User-Agent": UA,
+      Accept: "application/json",
+      Referer: "https://www.nseindia.com/market-data/live-equity-market",
+      Cookie: cookie,
+    },
+  });
+  if (!res.ok) return [];
+
+  const json = (await res.json()) as { data?: EquityIndexConstituentRow[] };
+  const symbols = (json.data ?? [])
+    .filter((r) => r.priority === 0 && r.symbol)
+    .map((r) => r.symbol!.trim().toUpperCase())
+    .filter((s) => s && !s.startsWith("NIFTY"));
+
+  const unique = [...new Set(symbols)];
+  if (!unique.length) return [];
+  return setCached(cacheKey, unique, 6 * 60 * 60 * 1000);
+}
+
+export async function resolveNseIndexApiSymbol(
+  indexDisplayName: string,
+): Promise<string | null> {
+  const normalized = indexDisplayName.trim().replace(/\s+/g, " ").toUpperCase();
+  const rows = await fetchNseAllIndices();
+  const row = rows.find(
+    (r) => r.index.trim().replace(/\s+/g, " ").toUpperCase() === normalized,
+  );
+  return row?.indexSymbol?.trim() || null;
+}
+
 export async function fetchNifty500Symbols(): Promise<string[]> {
   const cacheKey = "nse:nifty500-symbols";
   const cached = getCached<string[]>(cacheKey);
