@@ -6,9 +6,45 @@ import { useState } from "react";
 import { FadeIn, ShimmerBar } from "@/components/ui/motion";
 import { cn } from "@/lib/utils";
 import type { EmaScanResult } from "@/lib/ema-crossover";
+import { NseIndexSearchBar } from "@/components/market/nse-index-search-bar";
+import { InlineErrorCard } from "@/components/ui/inline-error-card";
+import { parseFetchErrorBody } from "@/lib/parse-fetch-error";
 
 type Timeframe = "daily" | "weekly";
 type Direction = "bullish" | "bearish";
+
+const EMA_INDEX_FALLBACKS = ["NIFTY 500", "NIFTY BANK", "NIFTY IT"] as const;
+
+function emaScanErrorContent(
+  message: string,
+  indexName: string,
+): {
+  title: string;
+  message?: string;
+  hints: string[];
+  suggestions: readonly string[];
+} {
+  if (message.includes("constituent list")) {
+    return {
+      title: "This index can't be scanned yet",
+      message: `We couldn't load an NSE constituent list for “${indexName}”.`,
+      hints: [
+        "EMA scans need NSE's published CSV for that index—not every searchable name has one.",
+        "Sector and flagship indices (NIFTY 500, NIFTY BANK, NIFTY IT) usually work.",
+      ],
+      suggestions: EMA_INDEX_FALLBACKS,
+    };
+  }
+  return {
+    title: "EMA scan failed",
+    message,
+    hints: [
+      "First scans can take a few minutes; if it timed out, try again.",
+      "Switch index, timeframe, or direction and retry.",
+    ],
+    suggestions: [],
+  };
+}
 
 function heatColor(pct: number): string {
   if (pct >= 2) return "bg-emerald-600/90";
@@ -23,14 +59,20 @@ function heatColor(pct: number): string {
 export function EmaCrossoverPanel() {
   const [timeframe, setTimeframe] = useState<Timeframe>("daily");
   const [direction, setDirection] = useState<Direction>("bullish");
+  const [indexName, setIndexName] = useState("NIFTY 500");
 
   const { data, isLoading, error, isFetching } = useQuery({
-    queryKey: ["ema-crossover", timeframe, direction],
+    queryKey: ["ema-crossover", timeframe, direction, indexName],
     queryFn: async () => {
-      const res = await fetch(
-        `/api/market/ema-crossover?timeframe=${timeframe}&direction=${direction}`,
-      );
-      if (!res.ok) throw new Error(await res.text());
+      const params = new URLSearchParams({
+        timeframe,
+        direction,
+        index: indexName,
+      });
+      const res = await fetch(`/api/market/ema-crossover?${params}`);
+      if (!res.ok) {
+        throw new Error(parseFetchErrorBody(await res.text()));
+      }
       return res.json() as Promise<EmaScanResult>;
     },
     staleTime: 6 * 60 * 60 * 1000,
@@ -40,13 +82,16 @@ export function EmaCrossoverPanel() {
     <div className="space-y-4">
       <FadeIn>
         <p className="text-sm text-zinc-500">
-          Nifty 500 · 50 EMA vs 200 EMA crossover on the{" "}
+          <strong className="font-medium text-zinc-300">{indexName}</strong>{" "}
+          constituents · 50 EMA vs 200 EMA crossover on the{" "}
           <strong className="font-medium text-zinc-300">latest</strong> bar
           {direction === "bullish"
             ? " (50 crosses above 200)"
             : " (50 crosses below 200)"}
         </p>
       </FadeIn>
+
+      <NseIndexSearchBar value={indexName} onChange={setIndexName} />
 
       <div className="flex flex-wrap gap-2">
         {(["daily", "weekly"] as const).map((t) => (
@@ -86,22 +131,49 @@ export function EmaCrossoverPanel() {
       {(isLoading || isFetching) && !data && (
         <div className="space-y-2">
           <p className="text-sm text-zinc-500">
-            Scanning Nifty 500 (first run may take 1–3 min)…
+            Scanning {indexName} (first run may take 1–3 min)…
           </p>
           <ShimmerBar />
         </div>
       )}
-      {error && (
-        <p className="text-sm text-red-400">
-          {error instanceof Error ? error.message : "Scan failed"}
-        </p>
-      )}
+      {error && (() => {
+        const msg =
+          error instanceof Error ? error.message : "Scan failed";
+        const content = emaScanErrorContent(msg, indexName);
+        return (
+          <InlineErrorCard
+            title={content.title}
+            message={content.message}
+            hints={content.hints}
+          >
+            {content.suggestions.length > 0 && (
+              <div className="flex flex-wrap items-center gap-2 pt-1">
+                <span className="text-xs text-zinc-500">Try:</span>
+                {content.suggestions.map((name) => (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => setIndexName(name)}
+                    className={cn(
+                      "rounded-md border border-zinc-700 bg-zinc-900/80 px-2.5 py-1 text-xs text-zinc-200 transition-colors hover:border-emerald-700/60 hover:bg-emerald-950/40 hover:text-emerald-200",
+                      indexName === name &&
+                        "border-emerald-700/50 bg-emerald-950/30 text-emerald-200",
+                    )}
+                  >
+                    {name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </InlineErrorCard>
+        );
+      })()}
 
       {data && (
         <FadeIn className="rounded-xl border border-zinc-800 bg-zinc-900/30">
           <div className="border-b border-zinc-800 px-4 py-3 text-sm text-zinc-400">
             <span className="text-zinc-100">{data.matches.length}</span> matches
-            · scanned {data.scanned} symbols
+            · {data.index} · scanned {data.scanned} symbols
             {data.note && (
               <span className="mt-1 block text-xs text-zinc-600">{data.note}</span>
             )}
@@ -160,7 +232,9 @@ export function NiftyHeatmapPanel() {
     queryKey: ["nse-heatmap"],
     queryFn: async () => {
       const res = await fetch("/api/market/heatmap");
-      if (!res.ok) throw new Error(await res.text());
+      if (!res.ok) {
+        throw new Error(parseFetchErrorBody(await res.text()));
+      }
       return res.json() as Promise<{
         groups: Array<{
           category: string;
@@ -185,10 +259,16 @@ export function NiftyHeatmapPanel() {
   }
 
   if (error) {
+    const msg = error instanceof Error ? error.message : "Heatmap failed";
     return (
-      <p className="text-sm text-red-400">
-        {error instanceof Error ? error.message : "Heatmap failed"}
-      </p>
+      <InlineErrorCard
+        title="Heatmap unavailable"
+        message={msg}
+        hints={[
+          "NSE live data can be flaky—refresh in a minute.",
+          "If this persists, check nseindia.com is reachable from your network.",
+        ]}
+      />
     );
   }
 

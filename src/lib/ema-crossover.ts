@@ -1,6 +1,6 @@
 import { getCached, setCached } from "./cache";
 import { detectEmaCrossover, aggregateToWeekly, ema, type CrossoverDirection } from "./ema";
-import { fetchNifty500Symbols } from "./nse";
+import { resolveEmaScanSymbols } from "./nse-index-constituents";
 import { fetchYahooCloseSeries, nseYahooSymbol } from "./yahoo-chart";
 
 export type EmaTimeframe = "daily" | "weekly";
@@ -15,6 +15,7 @@ export type EmaCrossoverHit = {
 export type EmaScanResult = {
   timeframe: EmaTimeframe;
   direction: CrossoverDirection;
+  index: string;
   scanned: number;
   matches: EmaCrossoverHit[];
   asOf: string;
@@ -83,12 +84,13 @@ async function scanOne(
 export async function runEmaCrossoverScan(
   timeframe: EmaTimeframe,
   direction: CrossoverDirection,
+  indexName?: string | null,
 ): Promise<EmaScanResult> {
-  const cacheKey = `ema-x:${timeframe}:${direction}`;
+  const { label, symbols } = await resolveEmaScanSymbols(indexName);
+  const cacheKey = `ema-x:${timeframe}:${direction}:${label}`;
   const cached = getCached<EmaScanResult>(cacheKey);
   if (cached) return cached;
 
-  const symbols = await fetchNifty500Symbols();
   const matches = await mapPool(symbols, (sym) =>
     scanOne(sym, timeframe, direction),
   );
@@ -98,11 +100,12 @@ export async function runEmaCrossoverScan(
   const result: EmaScanResult = {
     timeframe,
     direction,
+    index: label,
     scanned: symbols.length,
     matches,
     asOf: new Date().toISOString(),
     note:
-      "Crossover = 50 EMA crossed 200 EMA on the latest bar (Nifty 500 universe). First scan may take 1–3 minutes; cached 6h.",
+      `Crossover = 50 EMA crossed 200 EMA on the latest bar (${label} constituents). First scan may take 1–3 minutes; cached 6h.`,
   };
 
   return setCached(cacheKey, result, 6 * 60 * 60 * 1000);

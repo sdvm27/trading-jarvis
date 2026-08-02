@@ -12,6 +12,7 @@ export async function GET(req: Request) {
   const timeframe = (searchParams.get("timeframe") ?? "daily") as EmaTimeframe;
   const direction = (searchParams.get("direction") ??
     "bullish") as CrossoverDirection;
+  const index = searchParams.get("index")?.trim() || null;
 
   if (timeframe !== "daily" && timeframe !== "weekly") {
     return NextResponse.json({ error: "Invalid timeframe" }, { status: 400 });
@@ -21,7 +22,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const data = await runEmaCrossoverScan(timeframe, direction);
+    const data = await runEmaCrossoverScan(timeframe, direction, index);
     return NextResponse.json(data);
   } catch (e) {
     const message = e instanceof Error ? e.message : "EMA scan failed";
