@@ -1,0 +1,232 @@
+@import "tailwindcss";
+
+:root {
+  --background: #09090b;
+  --foreground: #fafafa;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* ——— Motion (respect prefers-reduced-motion via motion-reduce: overrides) ——— */
+
+@keyframes jarvis-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.jarvis-fade-in {
+  opacity: 0;
+  animation: jarvis-fade-in-up 0.45s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.jarvis-stagger > * {
+  opacity: 0;
+  animation: jarvis-fade-in-up 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.jarvis-stagger > *:nth-child(1) {
+  animation-delay: 0ms;
+}
+.jarvis-stagger > *:nth-child(2) {
+  animation-delay: 45ms;
+}
+.jarvis-stagger > *:nth-child(3) {
+  animation-delay: 90ms;
+}
+.jarvis-stagger > *:nth-child(4) {
+  animation-delay: 135ms;
+}
+.jarvis-stagger > *:nth-child(5) {
+  animation-delay: 180ms;
+}
+.jarvis-stagger > *:nth-child(6) {
+  animation-delay: 225ms;
+}
+.jarvis-stagger > *:nth-child(7) {
+  animation-delay: 270ms;
+}
+.jarvis-stagger > *:nth-child(8) {
+  animation-delay: 315ms;
+}
+
+@keyframes jarvis-pulse-dot {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.85);
+  }
+}
+
+.jarvis-pulse-dot {
+  animation: jarvis-pulse-dot 1.8s ease-in-out infinite;
+}
+
+@keyframes jarvis-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+.jarvis-shimmer {
+  animation: jarvis-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes jarvis-rs-pop {
+  0% {
+    transform: scale(0.92);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.jarvis-rs-pop {
+  animation: jarvis-rs-pop 0.2s ease-out;
+}
+
+@keyframes jarvis-row-in {
+  from {
+    opacity: 0;
+    transform: translateX(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.jarvis-row-in {
+  animation: jarvis-row-in 0.35s ease-out forwards;
+}
+
+.jarvis-accordion-grid {
+  display: grid;
+  transition: grid-template-rows 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.jarvis-accordion-grid[data-open="false"] {
+  grid-template-rows: 0fr;
+}
+
+.jarvis-accordion-grid[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+
+.jarvis-accordion-inner {
+  overflow: hidden;
+}
+
+.jarvis-card-hover {
+  transition:
+    border-color 0.25s ease,
+    background-color 0.25s ease,
+    transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.25s ease;
+}
+
+@media (hover: hover) {
+  .jarvis-card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px -12px rgb(16 185 129 / 0.15);
+  }
+}
+
+/* RS range slider */
+.jarvis-rs-slider {
+  height: 1.5rem;
+}
+
+.jarvis-rs-slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: rgb(39 39 42);
+}
+
+.jarvis-rs-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin-top: -6px;
+  border-radius: 9999px;
+  background: linear-gradient(145deg, #34d399, #10b981);
+  box-shadow:
+    0 0 0 2px rgb(9 9 11),
+    0 0 12px rgb(52 211 153 / 0.45);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.jarvis-rs-slider:active::-webkit-slider-thumb {
+  transform: scale(1.12);
+  box-shadow:
+    0 0 0 2px rgb(9 9 11),
+    0 0 18px rgb(52 211 153 / 0.65);
+}
+
+.jarvis-rs-slider::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: rgb(39 39 42);
+}
+
+.jarvis-rs-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 9999px;
+  background: linear-gradient(145deg, #34d399, #10b981);
+  box-shadow: 0 0 12px rgb(52 211 153 / 0.45);
+}
+
+.jarvis-main-enter {
+  animation: jarvis-fade-in-up 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .jarvis-fade-in,
+  .jarvis-stagger > *,
+  .jarvis-row-in,
+  .jarvis-rs-pop,
+  .jarvis-main-enter {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .jarvis-pulse-dot,
+  .jarvis-shimmer {
+    animation: none;
+  }
+
+  .jarvis-accordion-grid {
+    transition: none;
+  }
+
+  .jarvis-card-hover:hover {
+    transform: none;
+  }
+}

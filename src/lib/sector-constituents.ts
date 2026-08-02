@@ -1,0 +1,73 @@
+/** Liquid Nifty sector index constituents (subset for RS scans). */
+export const SECTOR_CONSTITUENTS: Record<string, string[]> = {
+  bank: [
+    "HDFCBANK",
+    "ICICIBANK",
+    "SBIN",
+    "KOTAKBANK",
+    "AXISBANK",
+    "INDUSINDBK",
+    "BANKBARODA",
+    "PNB",
+    "FEDERALBNK",
+    "IDFCFIRSTB",
+  ],
+  it: [
+    "TCS",
+    "INFY",
+    "HCLTECH",
+    "WIPRO",
+    "TECHM",
+    "LTIM",
+    "PERSISTENT",
+    "COFORGE",
+    "MPHASIS",
+  ],
+  auto: [
+    "MARUTI",
+    "M&M",
+    "TATAMOTORS",
+    "BAJAJ-AUTO",
+    "EICHERMOT",
+    "HEROMOTOCO",
+    "ASHOKLEY",
+    "TVSMOTOR",
+  ],
+  pharma: [
+    "SUNPHARMA",
+    "DRREDDY",
+    "CIPLA",
+    "DIVISLAB",
+    "TORNTPHARM",
+    "LUPIN",
+    "AUROPHARMA",
+  ],
+  fmcg: [
+    "HINDUNILVR",
+    "ITC",
+    "NESTLEIND",
+    "BRITANNIA",
+    "DABUR",
+    "GODREJCP",
+    "MARICO",
+  ],
+  metal: [
+    "TATASTEEL",
+    "HINDALCO",
+    "JSWSTEEL",
+    "VEDL",
+    "COALINDIA",
+    "NMDC",
+    "SAIL",
+  ],
+  realty: ["DLF", "GODREJPROP", "OBEROIRLTY", "PRESTIGE", "PHOENIXLTD"],
+  energy: ["RELIANCE", "ONGC", "NTPC", "POWERGRID", "BPCL", "IOC", "GAIL"],
+  media: ["ZEEL", "SUNTV", "NETWORK18", "PVRINOX"],
+  "psu-bank": ["SBIN", "BANKBARODA", "PNB", "CANBK", "UNIONBANK", "INDIANB"],
+  consumption: ["TITAN", "TATACONSUM", "VBL", "UNITDSPR", "DEVYANI"],
+  infra: ["LT", "ADANIPORTS", "IRCTC", "CONCOR", "ADANIENSOL"],
+};
+
+export function symbolsForSector(sectorId: string): string[] {
+  return SECTOR_CONSTITUENTS[sectorId] ?? [];
+}
