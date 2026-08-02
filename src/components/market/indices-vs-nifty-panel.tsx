@@ -15,6 +15,7 @@ import { parseFetchErrorBody } from "@/lib/parse-fetch-error";
 import type { ReactNode } from "react";
 import { cn, formatNumber } from "@/lib/utils";
 import type { IndicesVsNiftyCategory } from "@/lib/nse-index-categories";
+import { OutperformingCategoryStocksPanel } from "@/components/market/outperforming-category-stocks";
 
 const PERIODS: SectorPeriod[] = ["1d", "1w", "1m", "3m", "6m", "1y"];
 
@@ -247,6 +248,14 @@ export function IndicesVsNiftyPanel({
             rsThreshold={rsThreshold}
           />
         </FadeIn>
+      )}
+
+      {data && data.outperformers.length > 0 && (
+        <OutperformingCategoryStocksPanel
+          category={category}
+          period={period}
+          rsThreshold={rsThreshold}
+        />
       )}
 
       {data && (

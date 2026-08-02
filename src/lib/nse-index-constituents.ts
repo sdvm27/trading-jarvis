@@ -1,4 +1,8 @@
 import { getCached, setCached } from "./cache";
+import {
+  fetchNseEquityIndexConstituents,
+  resolveNseIndexApiSymbol,
+} from "./nse-client";
 
 const UA =
   "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36";
@@ -8,20 +12,51 @@ const ARCHIVE_CSV_OVERRIDES: Record<string, string> = {
   "NIFTY 500": "ind_nifty500list.csv",
   "NIFTY FIN SERVICE": "ind_niftyfinancelist.csv",
   "NIFTY FINANCIAL SERVICES": "ind_niftyfinancelist.csv",
+  "NIFTY INFRASTRUCTURE": "ind_niftyinfralist.csv",
+  "NIFTY INDIA CONSUMPTION": "ind_niftyconsumptionlist.csv",
+  "NIFTY CONSUMPTION": "ind_niftyconsumptionlist.csv",
+  "NIFTY COMMODITIES": "ind_niftycommoditieslist.csv",
+  "NIFTY CPSE": "ind_niftycpselist.csv",
+  "NIFTY PSE": "ind_niftypselist.csv",
+  "NIFTY ENERGY": "ind_niftyenergylist.csv",
+  "NIFTY MNC": "ind_niftymnclist.csv",
+  "NIFTY SERVICES SECTOR": "ind_niftyservicelist.csv",
+  "NIFTY 100": "ind_nifty100list.csv",
+  "NIFTY 200": "ind_nifty200list.csv",
+  "NIFTY MIDCAP 50": "ind_niftymidcap50list.csv",
+  "NIFTY MIDCAP 100": "ind_niftymidcap100list.csv",
+  "NIFTY SMALLCAP 50": "ind_niftysmallcap50list.csv",
+  "NIFTY SMALLCAP 100": "ind_niftysmallcap100list.csv",
+  "NIFTY MIDCAP 150": "ind_niftymidcap150list.csv",
+  "NIFTY SMALLCAP 250": "ind_niftysmallcap250list.csv",
 };
 
-export function indexNameToArchiveCsv(indexName: string): string {
+function archiveCsvCandidates(indexName: string): string[] {
   const normalized = indexName.trim().replace(/\s+/g, " ").toUpperCase();
+  const files: string[] = [];
   const override = ARCHIVE_CSV_OVERRIDES[normalized];
-  if (override) return override;
-  const slug =
+  if (override) files.push(override);
+
+  const compact =
     "ind_" +
     normalized
       .toLowerCase()
       .replace(/^nifty\s+/, "nifty")
-      .replace(/\s+/g, "") +
+      .replace(/[^a-z0-9]/g, "") +
     "list.csv";
-  return slug;
+  files.push(compact);
+
+  const noIndia = normalized.replace(/^NIFTY INDIA /, "NIFTY ");
+  if (noIndia !== normalized) {
+    const o2 = ARCHIVE_CSV_OVERRIDES[noIndia];
+    if (o2) files.push(o2);
+  }
+
+  return [...new Set(files)];
+}
+
+export function indexNameToArchiveCsv(indexName: string): string {
+  return archiveCsvCandidates(indexName)[0]!;
 }
 
 function parseConstituentCsv(text: string): string[] {
@@ -35,31 +70,48 @@ function parseConstituentCsv(text: string): string[] {
   return [...new Set(symbols)];
 }
 
-export async function fetchNseIndexConstituents(
+export async function tryFetchNseIndexConstituents(
   indexName: string,
-): Promise<string[]> {
+): Promise<string[] | null> {
   const normalized = indexName.trim().replace(/\s+/g, " ").toUpperCase();
   const cacheKey = `nse:constituents:${normalized}`;
   const cached = getCached<string[]>(cacheKey);
   if (cached) return cached;
 
-  const file = indexNameToArchiveCsv(normalized);
-  const url = `https://nsearchives.nseindia.com/content/indices/${file}`;
-  const res = await fetch(url, {
-    headers: { "User-Agent": UA },
-    next: { revalidate: 86400 },
-  });
-  if (!res.ok) {
+  for (const file of archiveCsvCandidates(normalized)) {
+    const url = `https://nsearchives.nseindia.com/content/indices/${file}`;
+    const res = await fetch(url, {
+      headers: { "User-Agent": UA },
+      next: { revalidate: 86400 },
+    });
+    if (!res.ok) continue;
+    const text = await res.text();
+    const symbols = parseConstituentCsv(text);
+    if (!symbols.length) continue;
+    return setCached(cacheKey, symbols, 24 * 60 * 60 * 1000);
+  }
+
+  const apiSymbol = await resolveNseIndexApiSymbol(normalized);
+  if (apiSymbol) {
+    const fromApi = await fetchNseEquityIndexConstituents(apiSymbol);
+    if (fromApi.length) {
+      return setCached(cacheKey, fromApi, 6 * 60 * 60 * 1000);
+    }
+  }
+
+  return null;
+}
+
+export async function fetchNseIndexConstituents(
+  indexName: string,
+): Promise<string[]> {
+  const symbols = await tryFetchNseIndexConstituents(indexName);
+  if (!symbols?.length) {
     throw new Error(
       `No NSE constituent list for “${indexName}”. Try another index (e.g. NIFTY BANK, NIFTY IT).`,
     );
   }
-  const text = await res.text();
-  const symbols = parseConstituentCsv(text);
-  if (!symbols.length) {
-    throw new Error(`Empty constituent list for ${indexName}`);
-  }
-  return setCached(cacheKey, symbols, 24 * 60 * 60 * 1000);
+  return symbols;
 }
 
 export async function resolveEmaScanSymbols(
