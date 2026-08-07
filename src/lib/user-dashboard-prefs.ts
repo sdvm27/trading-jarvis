@@ -65,13 +65,18 @@ export function readCustomScreeners(): CustomScreener[] {
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (x): x is CustomScreener =>
-        typeof x === "object" &&
-        x !== null &&
-        typeof (x as CustomScreener).slug === "string" &&
-        typeof (x as CustomScreener).title === "string",
-    );
+    return parsed
+      .filter(
+        (x): x is CustomScreener =>
+          typeof x === "object" &&
+          x !== null &&
+          typeof (x as CustomScreener).slug === "string" &&
+          typeof (x as CustomScreener).title === "string",
+      )
+      .map((s) => ({
+        ...s,
+        slug: s.slug.trim().toLowerCase(),
+      }));
   } catch {
     return [];
   }
@@ -79,7 +84,11 @@ export function readCustomScreeners(): CustomScreener[] {
 
 export function writeCustomScreeners(screeners: CustomScreener[]): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(CUSTOM_SCREENERS_STORAGE_KEY, JSON.stringify(screeners));
+  try {
+    localStorage.setItem(CUSTOM_SCREENERS_STORAGE_KEY, JSON.stringify(screeners));
+  } catch {
+    /* private mode / quota — state still updates for this session */
+  }
 }
 
 export function readHiddenScreenerSlugs(): string[] {

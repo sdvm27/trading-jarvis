@@ -16,7 +16,15 @@ export default function ScreenersPageClient() {
     useCustomScreeners();
   const [adding, setAdding] = useState(false);
   const hiddenSet = useMemo(() => new Set(hidden), [hidden]);
-  const list = q ? findScreenerByQuery(q, custom, hiddenSet) : all;
+  const list = useMemo(() => {
+    const base = q ? findScreenerByQuery(q, custom, hiddenSet) : all;
+    return [...base].sort((a, b) => {
+      const aCustom = isCustomScreener(a.slug) ? 0 : 1;
+      const bCustom = isCustomScreener(b.slug) ? 0 : 1;
+      if (aCustom !== bCustom) return aCustom - bCustom;
+      return a.title.localeCompare(b.title);
+    });
+  }, [q, custom, hiddenSet, all, isCustomScreener]);
 
   return (
     <div className="space-y-6">

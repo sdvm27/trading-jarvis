@@ -17,7 +17,9 @@ export function AddScreenerForm({ onAdd, onCancel, defaultPinned }: Props) {
   const submit = () => {
     const slug = parseScreenerInput(url);
     if (!slug) {
-      setError("Paste a ChartInk screener URL or slug.");
+      setError(
+        "Paste a full ChartInk screener URL (chartink.com/screener/…) or a valid slug.",
+      );
       return;
     }
     const name = title.trim() || slug;
@@ -28,7 +30,13 @@ export function AddScreenerForm({ onAdd, onCancel, defaultPinned }: Props) {
   };
 
   return (
-    <div className="rounded-xl border border-dashed border-emerald-800/60 bg-zinc-900/40 p-4">
+    <form
+      className="rounded-xl border border-dashed border-emerald-800/60 bg-zinc-900/40 p-4"
+      onSubmit={(e) => {
+        e.preventDefault();
+        submit();
+      }}
+    >
       <p className="text-xs font-medium uppercase tracking-wide text-zinc-500">
         Add screener
       </p>
@@ -56,8 +64,7 @@ export function AddScreenerForm({ onAdd, onCancel, defaultPinned }: Props) {
       {error && <p className="mt-2 text-xs text-amber-400">{error}</p>}
       <div className="mt-3 flex gap-2">
         <button
-          type="button"
-          onClick={submit}
+          type="submit"
           className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white"
         >
           Save
@@ -70,6 +77,6 @@ export function AddScreenerForm({ onAdd, onCancel, defaultPinned }: Props) {
           Cancel
         </button>
       </div>
-    </div>
+    </form>
   );
 }

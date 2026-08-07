@@ -58,18 +58,24 @@ export function chartinkStockUrl(symbol: string): string {
 export function parseScreenerInput(input: string): string | null {
   const trimmed = input.trim();
   if (!trimmed) return null;
-  try {
-    if (trimmed.includes("chartink.com")) {
+
+  if (trimmed.includes("chartink.com")) {
+    try {
       const u = new URL(trimmed.startsWith("http") ? trimmed : `https://${trimmed}`);
       const parts = u.pathname.split("/").filter(Boolean);
       const idx = parts.indexOf("screener");
-      if (idx >= 0 && parts[idx + 1]) return parts[idx + 1];
+      if (idx >= 0 && parts[idx + 1]) {
+        const segment = parts[idx + 1]!.toLowerCase();
+        if (segment !== "process" && isScreenerSlug(segment)) return segment;
+      }
+    } catch {
       return null;
     }
-  } catch {
     return null;
   }
-  if (/^[a-z0-9-]+$/i.test(trimmed) && trimmed.includes("-")) return trimmed;
+
+  const slug = trimmed.toLowerCase();
+  if (isScreenerSlug(slug)) return slug;
   return null;
 }
 
@@ -101,9 +107,22 @@ export function mergeScreeners(
   extra: ScreenerDef[] = [],
   hiddenSlugs: ReadonlySet<string> = new Set(),
 ): ScreenerDef[] {
-  const seen = new Set(SCREENERS.map((s) => s.slug));
-  const added = extra.filter((s) => !seen.has(s.slug));
-  return [...SCREENERS, ...added].filter((s) => !hiddenSlugs.has(s.slug));
+  const extraBySlug = new Map(extra.map((s) => [s.slug, s]));
+  const builtinSlugs = new Set(SCREENERS.map((s) => s.slug));
+  const out: ScreenerDef[] = [];
+
+  for (const s of SCREENERS) {
+    if (hiddenSlugs.has(s.slug)) continue;
+    const override = extraBySlug.get(s.slug);
+    out.push(override ? { ...s, ...override } : s);
+  }
+
+  for (const s of extra) {
+    if (builtinSlugs.has(s.slug) || hiddenSlugs.has(s.slug)) continue;
+    out.push(s);
+  }
+
+  return out;
 }
 
 export function getScreener(

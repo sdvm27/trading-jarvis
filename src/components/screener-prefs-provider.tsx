@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { mergeScreeners, SCREENERS, type ScreenerDef } from "@/lib/screeners";
+import { mergeScreeners, SCREENERS, isScreenerSlug, type ScreenerDef } from "@/lib/screeners";
 import {
   readCustomScreeners,
   readHiddenScreenerSlugs,
@@ -46,18 +46,27 @@ export function ScreenerPrefsProvider({ children }: { children: ReactNode }) {
   const hiddenSet = useMemo(() => new Set(hidden), [hidden]);
 
   const add = useCallback((item: Omit<CustomScreener, "custom">) => {
+    const slug = item.slug.trim().toLowerCase();
+    if (!isScreenerSlug(slug)) return;
+
     setCustom((prev) => {
-      if (prev.some((s) => s.slug === item.slug)) return prev;
-      const next: CustomScreener[] = [
-        ...prev,
-        { ...item, custom: true, pinned: item.pinned ?? true },
-      ];
+      const entry: CustomScreener = {
+        ...item,
+        slug,
+        custom: true,
+        pinned: item.pinned ?? true,
+      };
+      const idx = prev.findIndex((s) => s.slug === slug);
+      const next =
+        idx >= 0
+          ? prev.map((s, i) => (i === idx ? { ...s, ...entry } : s))
+          : [...prev, entry];
       writeCustomScreeners(next);
       return next;
     });
     setHidden((prev) => {
-      if (!prev.includes(item.slug)) return prev;
-      const next = prev.filter((s) => s !== item.slug);
+      if (!prev.includes(slug)) return prev;
+      const next = prev.filter((s) => s !== slug);
       writeHiddenScreenerSlugs(next);
       return next;
     });
