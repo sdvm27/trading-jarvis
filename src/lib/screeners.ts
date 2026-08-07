@@ -136,3 +136,12 @@ export function getScreener(
 export function isScreenerSlug(slug: string): boolean {
   return /^[a-z0-9][a-z0-9-]{2,}$/i.test(slug);
 }
+
+export function applyScreenerPinOverrides(
+  screeners: ScreenerDef[],
+  overrides: Readonly<Record<string, boolean>>,
+): ScreenerDef[] {
+  return screeners.map((s) =>
+    s.slug in overrides ? { ...s, pinned: overrides[s.slug]! } : s,
+  );
+}

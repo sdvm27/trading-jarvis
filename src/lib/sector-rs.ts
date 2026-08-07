@@ -20,7 +20,7 @@ export function assignSectorRsScores(
   }));
 }
 
-export const RS_STRONG_THRESHOLD = 80;
+export const RS_STRONG_THRESHOLD = 50;
 
 export function isStrongRs(rsScore: number, threshold = RS_STRONG_THRESHOLD): boolean {
   return rsScore >= threshold;

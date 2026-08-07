@@ -25,7 +25,7 @@ export type SectorPerformanceResult = {
   sectors: SectorPerformanceRow[];
   outperformers: SectorPerformanceRow[];
   underperformers: SectorPerformanceRow[];
-  /** Outperforming Nifty with cross-sectional RS ≥ 80 */
+  /** Outperforming Nifty with cross-sectional RS ≥ default threshold */
   strongRsOutperformers: SectorPerformanceRow[];
   asOf: string;
 };

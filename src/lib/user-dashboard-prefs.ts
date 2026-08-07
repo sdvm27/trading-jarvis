@@ -6,6 +6,9 @@ export const MACRO_PULSE_STORAGE_KEY = "jarvis-macro-pulse";
 export const CUSTOM_MACRO_LABELS_KEY = "jarvis-custom-macro-labels";
 export const CUSTOM_SCREENERS_STORAGE_KEY = "jarvis-custom-screeners";
 export const HIDDEN_SCREENERS_STORAGE_KEY = "jarvis-hidden-screeners";
+export const SCREENER_PIN_OVERRIDES_KEY = "jarvis-screener-pin-overrides";
+
+export type ScreenerPinOverrides = Record<string, boolean>;
 
 export const DEFAULT_MACRO_PULSE: MacroSeriesId[] = [
   "nifty-pb",
@@ -107,4 +110,30 @@ export function readHiddenScreenerSlugs(): string[] {
 export function writeHiddenScreenerSlugs(slugs: string[]): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(HIDDEN_SCREENERS_STORAGE_KEY, JSON.stringify(slugs));
+}
+
+export function readScreenerPinOverrides(): ScreenerPinOverrides {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = localStorage.getItem(SCREENER_PIN_OVERRIDES_KEY);
+    if (!raw) return {};
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object") return {};
+    const out: ScreenerPinOverrides = {};
+    for (const [k, v] of Object.entries(parsed)) {
+      if (typeof k === "string" && typeof v === "boolean") out[k] = v;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+export function writeScreenerPinOverrides(overrides: ScreenerPinOverrides): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(SCREENER_PIN_OVERRIDES_KEY, JSON.stringify(overrides));
+  } catch {
+    /* ignore */
+  }
 }
