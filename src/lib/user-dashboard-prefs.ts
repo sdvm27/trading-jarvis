@@ -5,6 +5,7 @@ import type { ScreenerDef } from "./screeners";
 export const MACRO_PULSE_STORAGE_KEY = "jarvis-macro-pulse";
 export const CUSTOM_MACRO_LABELS_KEY = "jarvis-custom-macro-labels";
 export const CUSTOM_SCREENERS_STORAGE_KEY = "jarvis-custom-screeners";
+export const HIDDEN_SCREENERS_STORAGE_KEY = "jarvis-hidden-screeners";
 
 export const DEFAULT_MACRO_PULSE: MacroSeriesId[] = [
   "nifty-pb",
@@ -77,5 +78,24 @@ export function readCustomScreeners(): CustomScreener[] {
 }
 
 export function writeCustomScreeners(screeners: CustomScreener[]): void {
+  if (typeof window === "undefined") return;
   localStorage.setItem(CUSTOM_SCREENERS_STORAGE_KEY, JSON.stringify(screeners));
+}
+
+export function readHiddenScreenerSlugs(): string[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(HIDDEN_SCREENERS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((x): x is string => typeof x === "string" && x.length > 0);
+  } catch {
+    return [];
+  }
+}
+
+export function writeHiddenScreenerSlugs(slugs: string[]): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(HIDDEN_SCREENERS_STORAGE_KEY, JSON.stringify(slugs));
 }

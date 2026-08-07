@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useState } from "react";
-import { ExternalLink, Plus } from "lucide-react";
+import { useState, useMemo } from "react";
+import { ExternalLink, Plus, Trash2 } from "lucide-react";
 import { AddScreenerForm } from "@/components/dashboard/add-screener-form";
 import { ScreenerSearchHero } from "@/components/screener-search-bar";
 import { useCustomScreeners } from "@/hooks/use-dashboard-prefs";
@@ -12,16 +12,19 @@ import { findScreenerByQuery, screenerUrl } from "@/lib/screeners";
 export default function ScreenersPageClient() {
   const searchParams = useSearchParams();
   const q = searchParams.get("q") ?? "";
-  const { custom, all, add } = useCustomScreeners();
+  const { custom, all, add, remove, isCustomScreener, hidden } =
+    useCustomScreeners();
   const [adding, setAdding] = useState(false);
-  const list = q ? findScreenerByQuery(q, custom) : all;
+  const hiddenSet = useMemo(() => new Set(hidden), [hidden]);
+  const list = q ? findScreenerByQuery(q, custom, hiddenSet) : all;
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-zinc-50">Screeners</h1>
         <p className="text-sm text-zinc-500">
-          Your ChartInk scans — open in-app or on ChartInk.
+          Your ChartInk scans — open in-app or on ChartInk. Custom screeners are
+          saved in this browser (no account needed).
         </p>
       </div>
 
@@ -83,6 +86,28 @@ export default function ScreenersPageClient() {
                 ChartInk
                 <ExternalLink className="h-3 w-3" />
               </a>
+              <button
+                type="button"
+                title={
+                  isCustomScreener(s.slug)
+                    ? "Delete screener"
+                    : "Remove from your list"
+                }
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      isCustomScreener(s.slug)
+                        ? `Delete “${s.title}”?`
+                        : `Remove “${s.title}” from your list? (You can add it again later.)`,
+                    )
+                  ) {
+                    remove(s.slug);
+                  }
+                }}
+                className="inline-flex items-center rounded-md border border-zinc-700 px-2 py-1 text-zinc-400 transition hover:border-red-900/60 hover:bg-red-950/40 hover:text-red-300"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
             </div>
           </li>
         ))}

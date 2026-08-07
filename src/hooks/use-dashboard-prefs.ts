@@ -12,16 +12,13 @@ import {
   nseMacroKey,
   yahooMacroKey,
 } from "@/lib/macro-keys";
-import { mergeScreeners, type ScreenerDef } from "@/lib/screeners";
+import { useScreenerPrefs } from "@/components/screener-prefs-provider";
 import {
   DEFAULT_MACRO_PULSE,
   readCustomMacroLabels,
-  readCustomScreeners,
   readMacroPulse,
   writeCustomMacroLabels,
-  writeCustomScreeners,
   writeMacroPulse,
-  type CustomScreener,
 } from "@/lib/user-dashboard-prefs";
 
 export function useMacroPulse() {
@@ -103,36 +100,7 @@ export function useMacroPulse() {
   };
 }
 
+/** @deprecated use useScreenerPrefs from screener-prefs-provider */
 export function useCustomScreeners() {
-  const [custom, setCustom] = useState<CustomScreener[]>([]);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    setCustom(readCustomScreeners());
-    setReady(true);
-  }, []);
-
-  const add = useCallback((item: Omit<CustomScreener, "custom">) => {
-    setCustom((prev) => {
-      if (prev.some((s) => s.slug === item.slug)) return prev;
-      const next: CustomScreener[] = [
-        ...prev,
-        { ...item, custom: true, pinned: item.pinned ?? true },
-      ];
-      writeCustomScreeners(next);
-      return next;
-    });
-  }, []);
-
-  const remove = useCallback((slug: string) => {
-    setCustom((prev) => {
-      const next = prev.filter((s) => s.slug !== slug);
-      writeCustomScreeners(next);
-      return next;
-    });
-  }, []);
-
-  const all: ScreenerDef[] = mergeScreeners(custom);
-
-  return { custom, all, add, remove, ready };
+  return useScreenerPrefs();
 }
