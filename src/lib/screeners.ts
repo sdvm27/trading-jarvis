@@ -85,9 +85,10 @@ export function parseStockSymbol(input: string): string | null {
 export function findScreenerByQuery(
   q: string,
   extra: ScreenerDef[] = [],
+  hiddenSlugs: ReadonlySet<string> = new Set(),
 ): ScreenerDef[] {
   const lower = q.trim().toLowerCase();
-  const all = mergeScreeners(extra);
+  const all = mergeScreeners(extra, hiddenSlugs);
   if (!lower) return all;
   return all.filter(
     (s) =>
@@ -96,17 +97,21 @@ export function findScreenerByQuery(
   );
 }
 
-export function mergeScreeners(extra: ScreenerDef[] = []): ScreenerDef[] {
+export function mergeScreeners(
+  extra: ScreenerDef[] = [],
+  hiddenSlugs: ReadonlySet<string> = new Set(),
+): ScreenerDef[] {
   const seen = new Set(SCREENERS.map((s) => s.slug));
   const added = extra.filter((s) => !seen.has(s.slug));
-  return [...SCREENERS, ...added];
+  return [...SCREENERS, ...added].filter((s) => !hiddenSlugs.has(s.slug));
 }
 
 export function getScreener(
   slug: string,
   extra: ScreenerDef[] = [],
+  hiddenSlugs: ReadonlySet<string> = new Set(),
 ): ScreenerDef | undefined {
-  return mergeScreeners(extra).find((s) => s.slug === slug);
+  return mergeScreeners(extra, hiddenSlugs).find((s) => s.slug === slug);
 }
 
 export function isScreenerSlug(slug: string): boolean {

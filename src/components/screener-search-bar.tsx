@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Search } from "lucide-react";
 import { useCustomScreeners } from "@/hooks/use-dashboard-prefs";
@@ -26,7 +26,8 @@ type DropdownRect = {
 
 export function ScreenerSearchBar({ compact, autoFocus }: Props) {
   const router = useRouter();
-  const { custom } = useCustomScreeners();
+  const { custom, hidden } = useCustomScreeners();
+  const hiddenSet = useMemo(() => new Set(hidden), [hidden]);
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
@@ -38,7 +39,10 @@ export function ScreenerSearchBar({ compact, autoFocus }: Props) {
 
   const symbol = parseStockSymbol(query);
   const screenerSlug = parseScreenerInput(query);
-  const screenerMatches = findScreenerByQuery(query, custom).slice(0, 8);
+  const screenerMatches = findScreenerByQuery(query, custom, hiddenSet).slice(
+    0,
+    8,
+  );
 
   const suggestions: Array<{
     key: string;

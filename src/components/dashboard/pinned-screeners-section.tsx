@@ -2,19 +2,16 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { AddScreenerForm } from "@/components/dashboard/add-screener-form";
 import { useCustomScreeners } from "@/hooks/use-dashboard-prefs";
-import { SCREENERS } from "@/lib/screeners";
+import { findScreenerByQuery, screenerUrl } from "@/lib/screeners";
 
 export function PinnedScreenersSection() {
-  const { custom, add } = useCustomScreeners();
+  const { all, add, remove, isCustomScreener } = useCustomScreeners();
   const [adding, setAdding] = useState(false);
 
-  const pinned = [
-    ...SCREENERS.filter((s) => s.pinned),
-    ...custom.filter((s) => s.pinned !== false),
-  ];
+  const pinned = all.filter((s) => s.pinned);
 
   return (
     <section>
@@ -23,16 +20,28 @@ export function PinnedScreenersSection() {
       </h2>
       <ul className="grid gap-2 sm:grid-cols-2">
         {pinned.map((s) => (
-          <li key={s.slug}>
+          <li key={s.slug} className="relative">
             <Link
               href={`/screeners/${s.slug}`}
-              className="jarvis-card-hover block rounded-lg border border-zinc-800 bg-zinc-900/30 px-4 py-3 text-sm hover:border-emerald-800/50"
+              className="jarvis-card-hover block rounded-lg border border-zinc-800 bg-zinc-900/30 px-4 py-3 pr-10 text-sm hover:border-emerald-800/50"
             >
               <span className="font-medium text-zinc-100">{s.title}</span>
               <span className="mt-0.5 block truncate text-xs text-zinc-500">
                 {s.slug}
               </span>
             </Link>
+            <button
+              type="button"
+              title={
+                isCustomScreener(s.slug)
+                  ? "Delete screener"
+                  : "Remove from pinned list"
+              }
+              onClick={() => remove(s.slug)}
+              className="absolute right-2 top-2 rounded p-1 text-zinc-500 hover:bg-red-950/50 hover:text-red-300"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
           </li>
         ))}
         {adding ? (
