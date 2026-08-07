@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState, useMemo } from "react";
-import { ExternalLink, Plus, Trash2 } from "lucide-react";
+import { ExternalLink, Pin, PinOff, Plus, Trash2 } from "lucide-react";
 import { AddScreenerForm } from "@/components/dashboard/add-screener-form";
 import { ScreenerSearchHero } from "@/components/screener-search-bar";
 import { useCustomScreeners } from "@/hooks/use-dashboard-prefs";
@@ -12,7 +12,7 @@ import { findScreenerByQuery, screenerUrl } from "@/lib/screeners";
 export default function ScreenersPageClient() {
   const searchParams = useSearchParams();
   const q = searchParams.get("q") ?? "";
-  const { custom, all, add, remove, isCustomScreener, hidden } =
+  const { custom, all, add, remove, togglePin, isCustomScreener, hidden } =
     useCustomScreeners();
   const [adding, setAdding] = useState(false);
   const hiddenSet = useMemo(() => new Set(hidden), [hidden]);
@@ -40,6 +40,7 @@ export default function ScreenersPageClient() {
 
       {adding ? (
         <AddScreenerForm
+          defaultPinned={false}
           onAdd={(item) => {
             add(item);
             setAdding(false);
@@ -79,6 +80,22 @@ export default function ScreenersPageClient() {
               <p className="text-xs text-zinc-500">{s.slug}</p>
             </div>
             <div className="flex gap-2">
+              <button
+                type="button"
+                title={s.pinned ? "Unpin" : "Pin to home"}
+                onClick={() => togglePin(s.slug, s.pinned === true)}
+                className={
+                  s.pinned
+                    ? "inline-flex items-center rounded-md border border-emerald-800/50 bg-emerald-950/30 px-2 py-1 text-emerald-400 hover:bg-emerald-950/50"
+                    : "inline-flex items-center rounded-md border border-zinc-700 px-2 py-1 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                }
+              >
+                {s.pinned ? (
+                  <PinOff className="h-3.5 w-3.5" />
+                ) : (
+                  <Pin className="h-3.5 w-3.5" />
+                )}
+              </button>
               <Link
                 href={`/screeners/${s.slug}`}
                 className="rounded-md border border-zinc-700 px-2.5 py-1 text-xs text-zinc-300 hover:bg-zinc-800"

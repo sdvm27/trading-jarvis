@@ -63,7 +63,7 @@ function pickSectorHint(row: ChartinkRow): string | undefined {
 
 export function extractHighRsStocks(
   rows: ChartinkRow[],
-  minRs = 80,
+  minRs = 50,
 ): HighRsStock[] {
   const map = new Map<string, HighRsStock>();
   for (const row of rows) {

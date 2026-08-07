@@ -11,8 +11,8 @@ const RS_SCANNER_SLUGS = [
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const minRs = Number(searchParams.get("minRs") ?? "80");
-  const threshold = Number.isFinite(minRs) ? minRs : 80;
+  const minRs = Number(searchParams.get("minRs") ?? "50");
+  const threshold = Number.isFinite(minRs) ? minRs : 50;
 
   const cacheKey = `high-rs-stocks:${threshold}`;
   const cached = getCached<{
